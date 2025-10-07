@@ -31,6 +31,173 @@
 
   <title>travel_web_app</title>
   <link rel="manifest" href="manifest.json">
+
+
+
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase 초기화 및 사용자 인증</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Inter 폰트 사용 */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f7f7;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app" class="bg-white p-8 md:p-12 rounded-xl shadow-2xl w-full max-w-lg text-center">
+        <h1 class="text-3xl font-bold text-gray-800 mb-4">Firebase 초기화 상태</h1>
+        <p class="text-gray-600 mb-6">콘솔에서 초기화 성공 여부를 확인하세요.</p>
+        
+        <!-- 상태 표시 영역 -->
+        <div class="bg-indigo-50 p-6 rounded-lg border border-indigo-200">
+            <div class="mb-4">
+                <p class="text-sm font-semibold text-indigo-700">인증 상태:</p>
+                <p id="auth-status" class="text-lg font-mono text-indigo-900 mt-1">로드 중...</p>
+            </div>
+            <div>
+                <p class="text-sm font-semibold text-indigo-700">현재 사용자 ID:</p>
+                <p id="user-id" class="text-xs break-all font-mono text-indigo-900 mt-1">N/A</p>
+            </div>
+        </div>
+        
+        <p id="error-message" class="text-red-600 mt-4 hidden"></p>
+    </div>
+
+    <!-- Firebase SDK 및 초기화 스크립트 -->
+    <script type="module">
+        // Firebase 모듈 임포트
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // UI 요소 가져오기
+        const authStatusElement = document.getElementById('auth-status');
+        const userIdElement = document.getElementById('user-id');
+        const errorMessageElement = document.getElementById('error-message');
+
+        // Firestore 및 인증 로깅 레벨 설정 (디버깅용)
+        setLogLevel('Debug');
+
+        // 1. 전역 변수에서 Firebase 설정 및 App ID 가져오기
+        let firebaseConfig, appId;
+        try {
+            if (typeof __firebase_config !== 'undefined' && typeof __app_id !== 'undefined') {
+                // 전역 변수는 문자열이므로 JSON.parse()로 객체로 변환해야 합니다.
+                firebaseConfig = JSON.parse(__firebase_config);
+                appId = __app_id;
+            } else {
+                console.error("Firebase 설정 또는 App ID 전역 변수를 찾을 수 없습니다. 기본값으로 대체합니다.");
+                firebaseConfig = {};
+                appId = 'default-app-id';
+            }
+        } catch (e) {
+            console.error("Firebase 설정 파싱 실패:", e);
+            errorMessageElement.textContent = `설정 로드 오류: ${e.message}`;
+            errorMessageElement.classList.remove('hidden');
+            return;
+        }
+
+        let app, db, auth;
+
+        // 비동기 초기화 및 인증 함수
+        async function initializeFirebase() {
+            try {
+                // 2. Firebase 앱 초기화
+                app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                console.log("✅ Firebase App 초기화 성공.");
+                console.log("App ID:", appId);
+
+                // 3. 인증 상태 리스너 설정
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        // 사용자 인증됨
+                        authStatusElement.textContent = "인증 성공 (로그인됨)";
+                        userIdElement.textContent = user.uid;
+                        console.log("사용자 인증 상태 변경: UID", user.uid);
+                    } else {
+                        // 사용자 로그아웃됨 (초기 상태 포함)
+                        authStatusElement.textContent = "인증 대기 중/로그아웃됨";
+                        userIdElement.textContent = "N/A";
+                        console.log("사용자 인증 상태 변경: 로그아웃됨");
+                        
+                        // onAuthStateChanged가 처음 실행될 때 인증 시도
+                        // 4. Custom Token 또는 익명 인증 시도
+                        authenticateUser();
+                    }
+                });
+
+            } catch (error) {
+                console.error("❌ Firebase 초기화 또는 인증에 치명적인 오류 발생:", error);
+                authStatusElement.textContent = "초기화 실패";
+                userIdElement.textContent = "오류 발생";
+                errorMessageElement.textContent = `치명적 오류: ${error.message}`;
+                errorMessageElement.classList.remove('hidden');
+            }
+        }
+
+        async function authenticateUser() {
+            // 전역 변수에서 초기 인증 토큰 가져오기
+            const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+            if (initialAuthToken) {
+                // Custom Token으로 로그인 시도
+                console.log("Custom Token으로 로그인 시도 중...");
+                try {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                    console.log("Custom Token으로 로그인 성공.");
+                } catch (error) {
+                    console.error("❌ Custom Token 로그인 실패:", error);
+                    // 토큰이 실패하면 익명으로 시도
+                    try {
+                        await signInAnonymously(auth);
+                        console.log("Custom Token 실패 후 익명 로그인 성공.");
+                    } catch (anonError) {
+                        console.error("❌ 익명 로그인도 실패:", anonError);
+                        authStatusElement.textContent = "인증 실패";
+                        userIdElement.textContent = "인증 오류";
+                        errorMessageElement.textContent = `최종 인증 오류: ${anonError.message}`;
+                        errorMessageElement.classList.remove('hidden');
+                    }
+                }
+            } else {
+                // Custom Token이 없으면 익명으로 로그인 시도
+                console.log("Custom Token이 없어 익명 로그인 시도 중...");
+                try {
+                    await signInAnonymously(auth);
+                    console.log("익명 로그인 성공.");
+                } catch (error) {
+                    console.error("❌ 익명 로그인 실패:", error);
+                    authStatusElement.textContent = "인증 실패";
+                    userIdElement.textContent = "인증 오류";
+                    errorMessageElement.textContent = `익명 인증 오류: ${error.message}`;
+                    errorMessageElement.classList.remove('hidden');
+                }
+            }
+        }
+
+        // 웹 페이지 로드 시 초기화 시작
+        window.onload = initializeFirebase;
+    </script>
+
+
+
+
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>
