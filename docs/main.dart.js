@@ -89312,7 +89312,7 @@ s=4
 break
 case 2:o=[1]
 case 4:q=1
-n.aG(new A.apO(n))
+if(n.c!=null)n.aG(new A.apO(n))
 s=o.pop()
 break
 case 5:return A.M(null,r)
