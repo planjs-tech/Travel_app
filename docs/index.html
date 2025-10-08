@@ -1,117 +1,38 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<!--
-	  If you are serving your web app in a path other than the root, change the
-	  href value below to reflect the base path you are serving from.
+  <!--
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
 
-	  The path provided below has to start and end with a slash "/" in order for
-	  it to work correctly.
-	-->
-	<base href="/Travel_app/">
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
 
-	<meta charset="UTF-8">
-	<meta content="IE=Edge" http-equiv="X-UA-Compatible">
-	<meta name="description" content="A new Flutter project.">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
 
-	<!-- iOS meta tags & icons -->
-	<meta name="mobile-web-app-capable" content="yes">
-	<meta name="apple-mobile-web-app-status-bar-style" content="black">
-	<meta name="apple-mobile-web-app-title" content="travel_web_app">
-	<link rel="apple-touch-icon" href="icons/Icon-192.png">
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
+  <base href="/Travel_app/">
 
-	<!-- Favicon -->
-	<link rel="icon" type="image/png" href="favicon.png"/>
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="A new Flutter project.">
 
-	<title>travel_web_app</title>
-	<link rel="manifest" href="manifest.json">
+  <!-- iOS meta tags & icons -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="travel_web_app">
+  <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
-	<!--
-		[중요] Firebase SDK 및 초기화 스크립트
-		이 스크립트는 Flutter가 로드되기 전에 Firebase 환경을 안전하게 구성합니다.
-		이 환경 변수들은 Canvas 플랫폼에서 제공되며, 없으면 Firebase 초기화가 실패할 수 있습니다.
-	-->
-	<script type="module">
-		// Firebase 모듈 임포트
-		import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-		import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-		import { getFirestore } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="favicon.png"/>
 
-		// Firebase 디버그 로깅 활성화
-		setLogLevel('Debug');
-
-		// 1. 전역 변수 안전하게 가져오기
-		let firebaseConfig, appId, initialAuthToken;
-		
-		try {
-			// __변수가 정의되어 있으면 파싱하고, 아니면 null 처리
-			firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : null;
-			appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-			initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-		} catch (e) {
-			console.error("❌ [HTML] Firebase 전역 설정 변수 파싱 실패:", e);
-			firebaseConfig = null; // 오류 발생 시 초기화 방지
-		}
-		
-		// 초기화 함수
-		async function initializeFirebase() {
-			if (!firebaseConfig || !Object.keys(firebaseConfig).length) {
-				console.error("❌ [HTML] Firebase 설정 변수가 유효하지 않아 초기화를 건너뛰었습니다.");
-				// 이 경우, Dart 코드에서 로컬 환경으로 강제 전환하여 FirebaseConfig가 없음을 알립니다.
-				window.isFirebaseReady = false;
-				return;
-			}
-			
-			try {
-				// 2. Firebase 앱 초기화 및 전역 등록
-				const app = initializeApp(firebaseConfig);
-				const auth = getAuth(app);
-				const db = getFirestore(app);
-
-				// [중요] Dart 코드에서 Firebase 인스턴스에 접근할 수 있도록 window 객체에 저장
-				window.firebaseApp = app;
-				window.firebaseAuth = auth;
-				window.firebaseFirestore = db;
-				window.firebaseAppId = appId;
-				window.isFirebaseReady = true;
-
-				console.log("✅ [HTML] Firebase App 초기화 성공.");
-
-				// 3. 인증 시도
-				if (initialAuthToken) {
-					await signInWithCustomToken(auth, initialAuthToken);
-					console.log("🔑 [HTML] Custom Token으로 로그인 성공.");
-				} else {
-					await signInAnonymously(auth);
-					console.log("👤 [HTML] 익명 로그인 성공.");
-				}
-
-				// 인증 상태 변경 리스너
-				onAuthStateChanged(auth, (user) => {
-					if (user) {
-						console.log(`🙋 [HTML] 최종 인증 UID: ${user.uid}`);
-						window.currentUserId = user.uid; // Dart에서 사용할 수 있도록 ID 저장
-					} else {
-						console.log("🚶 [HTML] 사용자 로그아웃 상태.");
-						window.currentUserId = null;
-					}
-				});
-
-			} catch (error) {
-				console.error("❌ [HTML] Firebase 초기화/인증 최종 실패:", error);
-				window.isFirebaseReady = false;
-			}
-		}
-
-		// 웹 페이지 로드 시 초기화 시작 (이벤트 리스너 사용)
-		window.addEventListener('load', initializeFirebase);
-	</script>
-	<!-- Firebase SDK Script End -->
-
+  <title>travel_web_app</title>
+  <link rel="manifest" href="manifest.json">
 </head>
 <body>
-	<div id="flutter_container"></div>
-	<script src="flutter_bootstrap.js" async></script>
+  <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
