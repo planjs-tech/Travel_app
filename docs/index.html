@@ -2,18 +2,18 @@
 <html>
 <head>
   <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
+    If you are serving your web app in a path other than the root, change the
+    href value below to reflect the base path you are serving from.
 
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
+    The path provided below has to start and end with a slash "/" in order for
+    it to work correctly.
 
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
+    For more details:
+    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
 
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
-  -->
+    This is a placeholder for base href that will be replaced by the value of
+    the `--base-href` argument provided to `flutter build`.
+  -->
   <base href="/Travel_app/">
 
   <meta charset="UTF-8">
@@ -33,6 +33,38 @@
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
+
+  <!-- 
+    ====================================================================
+    Firebase SDK 및 Config 추가 (에러 해결 핵심)
+    이 스크립트는 Flutter 앱 로더보다 먼저 실행되어야 합니다.
+    ====================================================================
+  -->
+  
+  <!-- 1. Firebase Core SDK 로드 (9.x 버전 호환 모듈 사용) -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <!-- 로그인 기능을 위해 Auth SDK도 함께 로드합니다. -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  
+  <!-- 2. Firebase 설정 정보 (Config) 정의 -->
+  <script>
+    // !! 중요 !! 여기에 Firebase 콘솔에서 복사한 실제 Config 내용을 붙여넣으세요.
+    // 이 변수(firebaseConfig)는 Dart 코드의 Firebase.initializeApp()에서 사용됩니다.
+    const firebaseConfig = {
+      apiKey: 'AIzaSyAmOE6x6rXL6OMLONOaFcc5HxvANvOKivc',
+      appId: '1:525255808146:web:1d6c23942582ade20b424b',
+      messagingSenderId: '525255808146',
+      projectId: 'travelapp-739e7',
+      authDomain: 'travelapp-739e7.firebaseapp.com',
+      storageBucket: 'travelapp-739e7.firebasestorage.app',
+      measurementId: 'G-6RZK7KE940',
+    };
+    
+    // Dart 코드에서 Firebase.initializeApp()을 호출할 것이므로, 
+    // 여기서 JS 초기화 코드는 생략합니다.
+  </script>
+
+  <!-- Flutter Web Loader Script -->
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
